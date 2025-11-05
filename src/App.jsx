@@ -3,7 +3,9 @@ import axios from "axios";
 import {
   PieChart, Pie, Cell, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  ResponsiveContainer // 👈 ¡Importante!
 } from "recharts";
+import yuhuLogo from './images/yuhu_logo.png'; // 👈 Importa tu logo
 
 export default function App() {
   const [nombre, setNombre] = useState("");
@@ -14,9 +16,10 @@ export default function App() {
   const [loadingComentario, setLoadingComentario] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
 
+  // URL del backend
   const API_URL = "https://yuhu-sentiment.onrender.com/api";
 
-  // Enviar comentario al backend
+  // Enviar comentario
   const enviarComentario = async (e) => {
     e.preventDefault();
     if (!comentario.trim()) return;
@@ -28,15 +31,11 @@ export default function App() {
         genero,
         comentario,
       });
-      console.log("resultado front",res)
-      setMensaje(
-        `✅ ${res.data.data.sentimiento}`
-      );
-      setLoadingComentario(false);
+      setMensaje(`✅ ${res.data.data.sentimiento}`);
       setNombre("");
       setGenero("M");
       setComentario("");
-      await fetchStats();
+      await fetchStats(); // Recargar stats después de enviar
     } catch (err) {
       console.error(err)
       setMensaje("❌ Error al analizar el comentario.");
@@ -45,12 +44,11 @@ export default function App() {
     }
   };
 
-  // Obtener estadísticas e insights
+  // Obtener estadísticas
   const fetchStats = async () => {
     setLoadingStats(true);
     try {
       const res = await axios.get(`${API_URL}/insights`);
-      console.log("insigts front", res);
       setStats(res.data);
     } catch (e) {
       console.error("Error cargando estadísticas", e);
@@ -59,191 +57,178 @@ export default function App() {
     }
   };
 
+  // Cargar stats al iniciar
   useEffect(() => {
     fetchStats();
   }, []);
 
-  const COLORS = ["#22c55e", "#ef4444", "#facc15"]; // verde, rojo, amarillo
+  // Colores para el gráfico de pastel (Verde, Rojo, Amarillo)
+  const COLORS = ["#22c55e", "#ef4444", "#facc15"];
 
   return (
-    
-    <div className="max-w-md mx-auto p-4 sm:p-6 bg-white rounded-2xl shadow-lg space-y-4">
-      <h1 className="text-3xl font-bold mb-6 text-indigo-600">
-        Análisis de Sentimientos - YUhu 🎯
-      </h1>
+    <div className="min-h-screen bg-gray-100 p-4 pt-8 sm:p-12">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* === ENCABEZADO === */}
+        <header className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4 mb-8">
+          <img src={yuhuLogo} alt="Yuhu Logo" className="w-20 h-20" />
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 text-center sm:text-left">
+            Dashboard de Sentimiento
+          </h1>
+        </header>
 
-      <form
-        onSubmit={enviarComentario}
-        className="bg-white p-6 rounded-2xl shadow-md w-full max-w-md mb-8"
-      >
-        <label className="block mb-2 font-semibold">Nombre:</label>
-        <input
-          type="text"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          required
-          className="w-full p-2 border rounded mb-4"
-        />
+        {/* === LAYOUT PRINCIPAL (GRID) === */}
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        <label className="block mb-2 font-semibold">Género:</label>
-        <select
-          value={genero}
-          onChange={(e) => setGenero(e.target.value)}
-          className="w-full p-2 border rounded mb-4"
-        >
-          <option value="M">Femenino</option>
-          <option value="H">Masculino</option>
-        </select>
+          {/* === COLUMNA 1: FORMULARIO === */}
+          <div className="lg:col-span-1">
+            <form
+              onSubmit={enviarComentario}
+              className="bg-white p-6 rounded-2xl shadow-lg w-full space-y-4"
+            >
+              <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                Analizar Nuevo Comentario
+              </h2>
+              <div>
+                <label className="block mb-2 font-semibold text-gray-600">Nombre:</label>
+                <input
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-        <label className="block mb-2 font-semibold">Comentario:</label>
-        <textarea
-          value={comentario}
-          onChange={(e) => setComentario(e.target.value)}
-          required
-          className="w-full p-2 border rounded mb-4"
-        ></textarea>
-
-        {/* 🔘 Botón de enviar comentario */}
-        <button
-          onClick={enviarComentario}
-          disabled={loadingComentario}
-          className={`w-full py-2 mt-3 rounded-lg text-white font-semibold transition ${
-            loadingComentario
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {loadingComentario ? (
-            <div className="flex justify-center items-center space-x-2">
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8z"
-                ></path>
-              </svg>
-              <span>Analizando comentario...</span>
-            </div>
-          ) : (
-            "Enviar comentario"
-          )}
-        </button>
-
-        {mensaje && <p className="mt-4 text-center font-semibold">{mensaje}</p>}
-      </form>
-
-      {loadingStats ? (
-  <div className="w-full flex flex-col items-center justify-center py-12">
-    <div className="flex items-center space-x-3">
-      <svg
-        className="animate-spin h-8 w-8 text-indigo-600"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8v8z"
-        ></path>
-      </svg>
-      <div className="text-sm text-gray-700">
-        <div className="font-medium">Recargando estadísticas...</div>
-        <div className="text-xs text-gray-500">Por favor espera, esto puede tardar unos segundos.</div>
-      </div>
-    </div>
-  </div>
-      ) : stats ? (
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mx-auto px-4 sm:px-6">
-          {/* GRÁFICA DE SENTIMIENTOS */}
-          <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 flex flex-col items-center">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 text-indigo-700">
-              Distribución de Sentimientos
-            </h2>
-            <div className="flex justify-center">
-              <PieChart width={Math.min(300, window.innerWidth - 80)} height={300}>
-                <Pie
-                  dataKey="value"
-                  data={[
-                    { name: "Positivos", value: stats.positivos },
-                    { name: "Negativos", value: stats.negativos },
-                    { name: "Neutros", value: stats.neutros },
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  label
+              <div>
+                <label className="block mb-2 font-semibold text-gray-600">Género:</label>
+                <select
+                  value={genero}
+                  onChange={(e) => setGenero(e.target.value)}
+                  className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
                 >
-                  {COLORS.map((color, index) => (
-                    <Cell key={`cell-${index}`} fill={color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </div>
-          </div>
+                  <option value="M">Femenino</option>
+                  <option value="H">Masculino</option>
+                </select>
+              </div>
 
-          {/* GRÁFICA DE GÉNERO */}
-          <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 flex flex-col items-center">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 text-indigo-700">
-              Participación por Género
-            </h2>
-            <div className="overflow-x-auto">
-              <BarChart
-                width={Math.min(400, window.innerWidth - 80)}
-                height={300}
-                data={[
-                  { name: "Hombres", value: stats.hombres },
-                  { name: "Mujeres", value: stats.mujeres },
-                ]}
+              <div>
+                <label className="block mb-2 font-semibold text-gray-600">Comentario:</label>
+                <textarea
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
+                  required
+                  rows="4"
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                ></textarea>
+              </div>
+
+              {/* Botón de enviar */}
+              <button
+                type="submit"
+                disabled={loadingComentario}
+                className={`w-full py-3 rounded-lg text-white font-semibold transition ${
+                  loadingComentario
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700" // 👈 Color azul de Yuhu
+                }`}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#6366f1" />
-              </BarChart>
-            </div>
+                {loadingComentario ? "Analizando..." : "Enviar Comentario"}
+              </button>
+
+              {mensaje && <p className="mt-4 text-center font-semibold">{mensaje}</p>}
+            </form>
           </div>
 
-          {/* INSIGHTS */}
-          <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 col-span-2">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 text-indigo-700">
-              📊 Insights Automáticos
-            </h2>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700">{stats.insights}</pre>
+          {/* === COLUMNA 2: GRÁFICOS E INSIGHTS === */}
+          <div className="lg:col-span-2 space-y-8">
+            {loadingStats ? (
+              <div className="w-full flex justify-center py-12">
+                <p className="text-gray-600">Cargando estadísticas...</p>
+              </div>
+            ) : stats ? (
+              <div className="space-y-8">
+                {/* Contenedor para los dos primeros gráficos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  {/* GRÁFICA DE SENTIMIENTOS (RESPONSIVA) */}
+                  <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col items-center">
+                    <h2 className="text-xl font-bold mb-4 text-gray-700">
+                      Distribución de Sentimientos
+                    </h2>
+                    {/* Contenedor con altura fija para que el gráfico se adapte */}
+                    <div className="w-full h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            dataKey="value"
+                            data={[
+                              { name: "Positivos", value: stats.positivos },
+                              { name: "Negativos", value: stats.negativos },
+                              { name: "Neutros", value: stats.neutros },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            fill="#8884d8"
+                            label
+                          >
+                            {COLORS.map((color, index) => (
+                              <Cell key={`cell-${index}`} fill={color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* GRÁFICA DE GÉNERO (RESPONSIVA) */}
+                  <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col items-center">
+                    <h2 className="text-xl font-bold mb-4 text-gray-700">
+                      Participación por Género
+                    </h2>
+                    {/* Contenedor con altura fija para que el gráfico se adapte */}
+                    <div className="w-full h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={[
+                            { name: "Hombres", value: stats.hombres },
+                            { name: "Mujeres", value: stats.mujeres },
+                          ]}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          {/* 👈 Color azul de Yuhu */}
+                          <Bar dataKey="value" fill="#2563EB" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* INSIGHTS (Ocupa todo el ancho) */}
+                <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                  <h2 className="text-xl font-bold mb-4 text-gray-700">
+                    📊 Insights Automáticos
+                  </h2>
+                  <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
+                    {stats.insights}
+                  </pre>
+                </div>
+
+              </div>
+            ) : (
+              <div className="w-full py-8 text-center text-gray-600">
+                <p>Aún no hay estadísticas disponibles.</p>
+              </div>
+            )}
           </div>
-        </div>
-      ) : (
-        <div className="w-full max-w-3xl mx-auto py-8 text-center text-gray-600">
-          <p className="mb-2 font-medium">Aún no hay estadísticas disponibles.</p>
-          <p className="text-sm">Envía el primer comentario para ver resultados y gráficos.</p>
-        </div>
-      )}
+        </main>
+      </div>
     </div>
   );
 }
