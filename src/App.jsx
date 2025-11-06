@@ -120,6 +120,7 @@ export default function App() {
                   required
                   rows="4"
                   className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Describe cómo te sientes con la maestría aquí..."
                 ></textarea>
               </div>
 
